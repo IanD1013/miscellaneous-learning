@@ -8,6 +8,7 @@ import re
 import sys
 from pathlib import Path
 
+from bs4 import BeautifulSoup, NavigableString
 from markdownify import markdownify
 from playwright.sync_api import sync_playwright
 
@@ -23,8 +24,31 @@ def code_language(el) -> str:
     return code_language(code) if code else ""
 
 
+def restore_dunders(html: str) -> str:
+    """Undo the site's Markdown renderer turning `__init__` into <strong>init</strong> (in headings).
+
+    A <strong> is restored only when its text is a bare identifier whose dunder form appears elsewhere
+    in the lesson (usually in code), so genuine bold words are left alone.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    for strong in soup.find_all("strong"):
+        name = strong.get_text()
+        if not (re.fullmatch(r"[a-z][a-z0-9_]*", name) and f"__{name}__" in html):
+            continue
+        # Pull a dotted prefix such as "super()." into the same code span.
+        prefix = ""
+        prev = strong.previous_sibling
+        if isinstance(prev, NavigableString) and (m := re.search(r"[\w().]*\.$", prev)):
+            prefix = m.group()
+            prev.replace_with(prev[: m.start()])
+        code = soup.new_tag("code")
+        code.string = f"{prefix}__{name}__"
+        strong.replace_with(code)
+    return str(soup)
+
+
 def to_markdown(html: str) -> str:
-    md = markdownify(html, heading_style="ATX", bullets="-", code_language_callback=code_language)
+    md = markdownify(restore_dunders(html), heading_style="ATX", bullets="-", code_language_callback=code_language)
     return re.sub(r"\n{3,}", "\n\n", md).strip() + "\n"
 
 
