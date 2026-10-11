@@ -2,6 +2,7 @@
 name: dometrain-notes
 description: Turn Dometrain lesson pages (dometrain.com/take/course/...) into faithful Simplified Chinese Markdown notes written to a file or folder the user names. Use whenever the user gives one or more Dometrain lesson URLs, or a Dometrain course plus a module name such as "Hello World", and asks for notes, a translation, or a Markdown version of the lesson content.
 argument-hint: <lesson-url> [<lesson-url> ...] <output-path-or-dir> | <course-or-lesson-url> "<module name>" <output-dir>
+model: sonnet
 ---
 
 # Dometrain lesson to Chinese Markdown
