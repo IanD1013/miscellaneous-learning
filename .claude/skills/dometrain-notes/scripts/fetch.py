@@ -4,7 +4,8 @@ Usage: fetch.py <lesson-url> [<lesson-url> ...]
 Writes one Markdown document per URL to stdout, each after a "<!-- lesson: URL lang: en|zh -->" marker line.
 Hands-on exercise lessons offer a site translation; it is selected so their content comes back in Simplified
 Chinese (lang: zh), followed by a "<!-- task -->" ... "<!-- /task -->" block holding the editor code and test
-cases. Quiz lessons have no translation or task block and come back in English (lang: en).
+cases. Terminal exercises (a shell sandbox instead of a code editor) have no task block.
+Quiz lessons have no translation or task block and come back in English (lang: en).
 Exits with code 2 if the saved session is not logged in.
 """
 import re
@@ -12,12 +13,13 @@ import sys
 from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString
-from markdownify import markdownify
+from markdownify import MarkdownConverter
 from playwright.sync_api import sync_playwright
 
 PROFILE_DIR = Path(__file__).resolve().parent.parent / ".profile"
 QUIZ_SELECTOR = "#quiz-instructions-content"
 EXERCISE_SELECTOR = "#exercise-instructions"
+TERMINAL_SELECTOR = ".terminal-exercise"
 TRANSLATION_DROPDOWN = "#translation-dropdown"
 TRANSLATION_LANG = "zh"
 
@@ -97,11 +99,11 @@ def lesson_html(page) -> tuple[str, str] | None:
 
 
 def exercise_task(page) -> str:
-    """Return the exercise's editor code and test cases as a marked block, or "" for a quiz lesson.
+    """Return the exercise's editor code and test cases as a marked block, or "" for a quiz or terminal lesson.
 
     This is input for solving the lesson's "Your Task", not lesson text to translate.
     """
-    if not page.locator(EXERCISE_SELECTOR).count():
+    if not page.locator(EXERCISE_SELECTOR).count() or page.locator(TERMINAL_SELECTOR).count():
         return ""
     page.wait_for_function("() => window.monaco && monaco.editor.getEditors()[0]?.getModel()")
     parts = ["<!-- task: editor code and test cases, for solving only -->"]
@@ -123,14 +125,28 @@ def exercise_task(page) -> str:
     return "\n\n".join(parts) + "\n"
 
 
+class LessonConverter(MarkdownConverter):
+    def convert_code(self, el, text, parent_tags):
+        """Keep inline code verbatim: markdownify moves edge spaces outside the span, so `M ` would become `M`."""
+        if "_noformat" in parent_tags or not text:
+            return text
+        fence = "`" * (max(map(len, re.findall("`+", text)), default=0) + 1)
+        # CommonMark strips one space from each side of a span that starts and ends with one, and a span
+        # starting or ending with a backtick needs a space to separate it from the fence.
+        pad = " " if text[0] == "`" or text[-1] == "`" or (text[0] == text[-1] == " " and text.strip()) else ""
+        return f"{fence}{pad}{text}{pad}{fence}"
+
+
 def to_markdown(html: str) -> str:
-    md = markdownify(restore_dunders(html), heading_style="ATX", bullets="-", code_language_callback=code_language)
+    md = LessonConverter(heading_style="ATX", bullets="-", code_language_callback=code_language).convert(
+        restore_dunders(html)
+    )
     return re.sub(r"\n{3,}", "\n\n", md).strip() + "\n"
 
 
 def main(urls: list[str]) -> None:
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(PROFILE_DIR, channel="chrome", headless=True)
+        ctx = p.chromium.launch_persistent_context(PROFILE_DIR, headless=True)
         page = ctx.new_page()
         for url in urls:
             page.goto(url, wait_until="networkidle")

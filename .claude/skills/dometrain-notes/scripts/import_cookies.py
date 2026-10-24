@@ -31,7 +31,7 @@ def parse(path: Path) -> list[dict]:
 
 cookies = parse(Path(sys.argv[1]))
 with sync_playwright() as p:
-    ctx = p.chromium.launch_persistent_context(PROFILE_DIR, channel="chrome", headless=True)
+    ctx = p.chromium.launch_persistent_context(PROFILE_DIR, headless=True)
     ctx.add_cookies(cookies)
     ctx.close()
 print(f"Imported {len(cookies)} dometrain.com cookies.")

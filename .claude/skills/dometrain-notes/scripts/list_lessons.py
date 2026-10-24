@@ -16,7 +16,7 @@ CHAPTER_SELECTOR = "#curriculum-sidebar .curriculum-chapter"
 
 def main(url: str, module: str) -> None:
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(PROFILE_DIR, channel="chrome", headless=True)
+        ctx = p.chromium.launch_persistent_context(PROFILE_DIR, headless=True)
         page = ctx.new_page()
         page.goto(url, wait_until="networkidle")
         chapters = page.locator(CHAPTER_SELECTOR).all()
