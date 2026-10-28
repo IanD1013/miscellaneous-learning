@@ -30,25 +30,82 @@ function Get-NumberSum {
 
 ```powershell
 function Get-KeyTotals {
- [CmdletBinding()] param([Parameter(ValueFromPipelineByPropertyName=$true)][ValidateNotNullOrEmpty()][string]$Key='unused',[Parameter(ValueFromPipelineByPropertyName=$true)][ValidateRange(0,8)][int]$Value)
- begin { $totals=@{}; $keys=@(); $count=0; $total=0; $script:Begins++ }
- process {
-  $script:Processes++; $keyName=$Key.ToLower()
-  if (-not $totals.ContainsKey($keyName)) { $totals[$keyName]=[pscustomobject]@{Key=$keyName;Count=0;Total=0}; $keys+= $keyName }
-  $totals[$keyName].Count++; $totals[$keyName].Total+= $Value
-  $count++; $total+= $Value
- }
- end { $script:Ends++; $groups=@(foreach ($keyName in $keys) { $totals[$keyName] }); [pscustomobject]@{Count=$count;Total=$total;Groups=@($groups)} }
+    [CmdletBinding()] 
+    param(
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Key='unused',
+
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateRange(0,8)]
+        [int]$Value
+    )
+    begin { 
+        $totals=@{}
+        $keys=@()
+        $count=0
+        $total=0
+        $script:Begins++
+    }
+    process {
+        $script:Processes++
+        $keyName=$Key.ToLower()
+
+        if (-not $totals.ContainsKey($keyName)) { 
+            $totals[$keyName]=[pscustomobject]@{Key=$keyName;Count=0;Total=0}
+            $keys += $keyName 
+        }
+        $totals[$keyName].Count++
+        $totals[$keyName].Total += $Value
+        $count++; 
+        $total += $Value
+    }
+    end { 
+        $script:Ends++
+        $groups=@(foreach ($keyName in $keys) { $totals[$keyName] })
+        [pscustomobject]@{Count=$count;Total=$total;Groups=@($groups)} 
+    }
 }
+
 function Invoke-Exercise {
- param($Inputs,$Options)
- $script:Begins=0; $script:Processes=0; $script:Ends=0
- try {
-  if (@($Inputs).Count -gt 8) { throw 'limit' }
-  foreach ($record in $Inputs) { if ($null -eq $record.Key -or $record.Key.Length -gt 40 -or $null -eq $record.Value) { throw 'record' } }
-  $summary=$Inputs | Get-KeyTotals
-  if ($Options.Repeat) { $second=@() | Get-KeyTotals; [pscustomobject]@{First=$summary;Second=$second;Begins=$script:Begins;Processes=$script:Processes;Ends=$script:Ends} }
-  else { [pscustomobject]@{Summary=$summary;Begins=$script:Begins;Processes=$script:Processes;Ends=$script:Ends} }
- } catch { [pscustomobject]@{Rejected=$true;Processes=$script:Processes} }
+    param($Inputs,$Options)
+    $script:Begins=0
+    $script:Processes=0
+    $script:Ends=0
+
+    try {
+        if (@($Inputs).Count -gt 8) { 
+            throw 'limit' 
+        }
+        foreach ($record in $Inputs) {
+            if ($null -eq $record.Key -or $record.Key.Length -gt 40 -or $null -eq $record.Value) { 
+                throw 'record' 
+            } 
+        }
+        $summary=$Inputs | Get-KeyTotals
+        if ($Options.Repeat) { 
+            $second=@() | Get-KeyTotals
+            [pscustomobject]@{
+                First=$summary
+                Second=$second
+                Begins=$script:Begins
+                Processes=$script:Processes
+                Ends=$script:Ends
+            } 
+        }
+        else { 
+            [pscustomobject]@{
+                Summary=$summary
+                Begins=$script:Begins
+                Processes=$script:Processes
+                Ends=$script:Ends
+            } 
+        }
+    } catch { 
+        [pscustomobject]@{
+            Rejected=$true
+            Processes=$script:Processes
+        } 
+    }
 }
 ```

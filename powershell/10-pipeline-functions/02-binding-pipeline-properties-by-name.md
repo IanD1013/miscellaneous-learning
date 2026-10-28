@@ -28,17 +28,39 @@ function Get-RecordValue {
 
 ```powershell
 function Get-Scaled {
- [CmdletBinding()] param([Parameter(ValueFromPipelineByPropertyName=$true)][ValidateRange(0,8)][int]$Value,[Parameter(ValueFromPipelineByPropertyName=$true)][ValidateRange(0,8)][int]$Factor=2)
- process { [pscustomobject]@{Value=$Value;Factor=$Factor;Scaled=$Value * $Factor} }
+    [CmdletBinding()] 
+    param(
+        [Parameter(ValueFromPipelineByPropertyName=$true)][ValidateRange(0,8)][int]$Value,[Parameter(ValueFromPipelineByPropertyName=$true)][ValidateRange(0,8)][int]$Factor=2
+    )
+    process { 
+        [pscustomobject]@{
+            Value=$Value;
+            Factor=$Factor;
+            Scaled=$Value * $Factor
+        } 
+    }
 }
+
 function Invoke-Exercise {
- param($Inputs,$Options)
- try {
-  if (@($Inputs).Count -gt 8) { throw 'limit' }
-  foreach ($record in $Inputs) { if ($null -eq $record.Value) { throw 'value' } }
-  if ($null -ne $Options.Factor) { $items=@($Inputs | Get-Scaled -Factor $Options.Factor) }
-  else { $items=@($Inputs | Get-Scaled) }
-  [pscustomobject]@{Items=@($items)}
- } catch { [pscustomobject]@{Rejected=$true} }
+    param($Inputs,$Options)
+    try {
+        if (@($Inputs).Count -gt 8) { 
+            throw 'limit' 
+        }
+        foreach ($record in $Inputs) { 
+            if ($null -eq $record.Value) { 
+                throw 'value' 
+            } 
+        }
+        if ($null -ne $Options.Factor) { 
+            $items=@($Inputs | Get-Scaled -Factor $Options.Factor) 
+        }
+        else { 
+            $items=@($Inputs | Get-Scaled) 
+        }
+        [pscustomobject]@{Items=@($items)}
+    } catch { 
+        [pscustomobject]@{Rejected=$true} 
+    }
 }
 ```

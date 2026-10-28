@@ -25,30 +25,35 @@ try {
 
 ```powershell
 function Convert-Record {
- [CmdletBinding()] param([Parameter(Mandatory=$true)][ValidateRange(0,8)][int]$Value)
- return ($Value + 1)
+    [CmdletBinding()] 
+    param(
+        [Parameter(Mandatory=$true)][ValidateRange(0,8)][int]$Value
+    )
+    return ($Value + 1)
 }
+
 function Invoke-Transform($Records) {
- $path = '/workspace/data.txt'
- $before = Get-Content $path -Raw
- try {
-  if (@($Records).Count -gt 8) { throw 'Too many records' }
-  # 每次调用都从新的暂存集合开始
-  $rows = @()
-  foreach ($record in $Records) {
-   if ($null -eq $record.Key -or $record.Key.Length -eq 0 -or $record.Key.Length -gt 40 -or $null -eq $record.Value) { throw 'Invalid record' }
-   $converted = Convert-Record -Value $record.Value
-   $rows += ($record.Key + ':' + $converted)
-  }
-  $desired = $rows -join '|'
- } catch {
-  return [pscustomobject]@{ Success=$false; Changed=$false; Content=$before }
- }
- $changed = $false
- if ($before -cne $desired) {
-  Set-Content $path $desired -NoNewline
-  $changed = $true
- }
- return [pscustomobject]@{ Success=$true; Changed=$changed; Content=$desired }
+    $path = '/workspace/data.txt'
+    $before = Get-Content $path -Raw
+
+    try {
+        if (@($Records).Count -gt 8) { throw 'Too many records' }
+        # 每次调用都从新的暂存集合开始
+        $rows = @()
+        foreach ($record in $Records) {
+            if ($null -eq $record.Key -or $record.Key.Length -eq 0 -or $record.Key.Length -gt 40 -or $null -eq $record.Value) { throw 'Invalid record' }
+            $converted = Convert-Record -Value $record.Value
+            $rows += ($record.Key + ':' + $converted)
+        }
+        $desired = $rows -join '|'
+    } catch {
+        return [pscustomobject]@{ Success=$false; Changed=$false; Content=$before }
+    }
+    $changed = $false
+    if ($before -cne $desired) {
+        Set-Content $path $desired -NoNewline
+        $changed = $true
+    }
+    return [pscustomobject]@{ Success=$true; Changed=$changed; Content=$desired }
 }
 ```

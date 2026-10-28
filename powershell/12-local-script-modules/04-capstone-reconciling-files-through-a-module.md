@@ -22,34 +22,45 @@ reconcile.psm1
 
 ```powershell
 function Convert-Records {
- [CmdletBinding()] param([Parameter(ValueFromPipelineByPropertyName=$true)][string]$Key,[Parameter(ValueFromPipelineByPropertyName=$true)]$Value)
- begin { $seen=@{}; $items=@() }
- process {
-  if ($null -eq $Key -or $Key.Length -eq 0 -or $Key.Length -gt 40 -or $null -eq $Value -or $Value -lt 0 -or $Value -gt 8) { throw 'Invalid record' }
-  if ($seen.ContainsKey($Key)) {
-   if ($seen[$Key] -ne $Value) { throw 'Conflicting key' }
-  } else { $seen[$Key]=$Value; $items += [pscustomobject]@{Key=$Key;Value=$Value} }
- }
- end { [pscustomobject]@{Items=@($items);Count=$items.Count} }
+    [CmdletBinding()] 
+    param(
+        [Parameter(ValueFromPipelineByPropertyName=$true)][string]$Key,
+        [Parameter(ValueFromPipelineByPropertyName=$true)]$Value
+    )
+    begin { $seen=@{}; $items=@() }
+    process {
+        if ($null -eq $Key -or $Key.Length -eq 0 -or $Key.Length -gt 40 -or $null -eq $Value -or $Value -lt 0 -or $Value -gt 8) { throw 'Invalid record' }
+        if ($seen.ContainsKey($Key)) {
+            if ($seen[$Key] -ne $Value) { throw 'Conflicting key' }
+        } else { 
+            $seen[$Key]=$Value; $items += [pscustomobject]@{Key=$Key;Value=$Value} 
+        }
+    }
+    end { [pscustomobject]@{Items=@($items);Count=$items.Count} }
 }
+
 function Sync-Records {
- [CmdletBinding(SupportsShouldProcess=$true)] param($Records,[string]$Path='/workspace/data.txt')
- try {
-  if (@($Records).Count -gt 8) { throw 'Too many records' }
-  $staged=$Records | Convert-Records
-  $text=ConvertTo-Json -InputObject @($staged.Items) -Compress
-  $old=Get-Content $Path -Raw
-  $would=$old -cne $text
-  $changed=$false
-  if ($would) {
-   if ($PSCmdlet.ShouldProcess($Path, 'Replace content')) {
-    # 校验全部通过之后才写入
-    Set-Content $Path $text -NoNewline
-    $changed=$true
-   }
-  }
-  [pscustomobject]@{Success=$true;Changed=$changed;WouldChange=$would;Count=$staged.Count}
- } catch { [pscustomobject]@{Success=$false;Changed=$false;WouldChange=$false;Count=0} }
+    [CmdletBinding(SupportsShouldProcess=$true)] 
+    param($Records, [string]$Path='/workspace/data.txt')
+
+    try {
+        if (@($Records).Count -gt 8) { throw 'Too many records' }
+        $staged=$Records | Convert-Records
+        $text=ConvertTo-Json -InputObject @($staged.Items) -Compress
+        $old=Get-Content $Path -Raw
+        $would=$old -cne $text
+        $changed=$false
+        if ($would) {
+            if ($PSCmdlet.ShouldProcess($Path, 'Replace content')) {
+                # 校验全部通过之后才写入
+                Set-Content $Path $text -NoNewline
+                $changed=$true
+            }
+        }
+        [pscustomobject]@{Success=$true;Changed=$changed;WouldChange=$would;Count=$staged.Count}
+    } catch { 
+        [pscustomobject]@{Success=$false;Changed=$false;WouldChange=$false;Count=0} 
+    }
 }
 Export-ModuleMember -Function Sync-Records
 ```

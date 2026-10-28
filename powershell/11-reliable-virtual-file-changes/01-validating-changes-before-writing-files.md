@@ -34,30 +34,45 @@ if ($before -cne $desired) {
 
 ```powershell
 function Convert-Lines($Lines) {
- if (@($Lines).Count -gt 8) { throw 'Too many lines' }
- $staged = @()
- foreach ($line in $Lines) {
-  if ($null -eq $line -or $line.Length -gt 40 -or $line.Trim().Length -eq 0) { throw 'Invalid line' }
-  $staged += $line.Trim().ToLower()
- }
- return ($staged -join '|')
+    if (@($Lines).Count -gt 8) { throw 'Too many lines' }
+    $staged = @()
+    foreach ($line in $Lines) {
+        if ($null -eq $line -or $line.Length -gt 40 -or $line.Trim().Length -eq 0) { 
+            throw 'Invalid line' 
+        }
+        $staged += $line.Trim().ToLower()
+    }
+    return ($staged -join '|')
 }
+
 function Set-ValidatedContent {
- param($Lines)
- $path = '/workspace/data.txt'
- $before = Get-Content $path -Raw
- try {
-  # 先在内存中验证整批内容，再决定是否写入
-  $desired = Convert-Lines -Lines $Lines
- } catch {
-  return [pscustomobject]@{ Success=$false; Changed=$false; WouldChange=$false; Content=$before }
- }
- $wouldChange = $before -cne $desired
- $changed = $false
- if ($wouldChange) {
-  Set-Content $path $desired -NoNewline
-  $changed = $true
- }
- return [pscustomobject]@{ Success=$true; Changed=$changed; WouldChange=$wouldChange; Content=$desired }
+    param($Lines)
+    $path = '/workspace/data.txt'
+    $before = Get-Content $path -Raw
+
+    try {
+        # 先在内存中验证整批内容，再决定是否写入
+        $desired = Convert-Lines -Lines $Lines
+    } catch {
+        return [pscustomobject]@{ 
+            Success=$false
+            Changed=$false
+            WouldChange=$false
+            Content=$before 
+        }
+    }
+    
+    $wouldChange = $before -cne $desired
+    $changed = $false
+    if ($wouldChange) {
+        Set-Content $path $desired -NoNewline
+        $changed = $true
+    }
+    return [pscustomobject]@{ 
+        Success=$true
+        Changed=$changed
+        WouldChange=$wouldChange
+        Content=$desired 
+    }
 }
 ```

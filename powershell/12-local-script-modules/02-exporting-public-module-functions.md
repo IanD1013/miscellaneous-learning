@@ -23,9 +23,9 @@ tools.psm1
 ```powershell
 function Format-Value([string]$Value) { $Value.Trim().ToLower() }
 function Get-Normalized($Values) {
- $items=@()
- foreach ($value in $Values) { $items += Format-Value $value }
- [pscustomobject]@{Items=@($items);Count=$items.Count}
+    $items=@()
+    foreach ($value in $Values) { $items += Format-Value $value }
+    [pscustomobject]@{Items=@($items);Count=$items.Count}
 }
 function Get-NormalizedCount($Values) { @($Values).Count }
 Export-ModuleMember -Function Get-Normalized,Get-NormalizedCount

@@ -34,17 +34,18 @@ $version = Get-Version
 
 ```powershell
 function Invoke-Exercise($Inputs, $Options) {
- try {
-  # 第一次调用之前导入模块
-  Import-Module -Name ./tools.psm1
-  $first = Get-Version
-  if ($Options.Change) { Set-Content ./tools.psm1 $Inputs.Source -NoNewline }
-  if ($Options.Remove) { Remove-Module -Name tools }
-  if ($Options.Missing) { Import-Module -Name ./missing.psm1 }
-  # 第二次调用之前再次导入：未移除时复用缓存，移除后读取新文件
-  Import-Module -Name ./tools.psm1
-  $second = Get-Version
-  [pscustomobject]@{Success=$true;First=$first;Second=$second}
- } catch { [pscustomobject]@{Success=$false;First=$first;Second=$null} }
+    try {
+        # 第一次调用之前导入模块
+        Import-Module -Name ./tools.psm1
+        $first = Get-Version
+        if ($Options.Change) { Set-Content ./tools.psm1 $Inputs.Source -NoNewline }
+        if ($Options.Remove) { Remove-Module -Name tools }
+        if ($Options.Missing) { Import-Module -Name ./missing.psm1 }
+        
+        # 第二次调用之前再次导入：未移除时复用缓存，移除后读取新文件
+        Import-Module -Name ./tools.psm1
+        $second = Get-Version
+        [pscustomobject]@{Success=$true;First=$first;Second=$second}
+    } catch { [pscustomobject]@{Success=$false;First=$first;Second=$null} }
 }
 ```

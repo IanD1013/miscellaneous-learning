@@ -29,27 +29,29 @@ return 表达式在临时模式处于激活状态时捕获 `'Upper'`。`finally`
 
 ```powershell
 $script:FormatMode = 'Plain'
+
 function Convert-Lines($Lines) {
- if (@($Lines).Count -gt 8) { throw 'Too many lines' }
- $staged = @()
- foreach ($line in $Lines) {
-  if ($null -eq $line -or $line.Length -gt 40 -or $line.Trim().Length -eq 0) { throw 'Invalid line' }
-  $staged += $line.Trim().ToLower()
- }
- return ($staged -join '|')
+    if (@($Lines).Count -gt 8) { throw 'Too many lines' }
+    $staged = @()
+    foreach ($line in $Lines) {
+        if ($null -eq $line -or $line.Length -gt 40 -or $line.Trim().Length -eq 0) { throw 'Invalid line' }
+        $staged += $line.Trim().ToLower()
+    }
+    return ($staged -join '|')
 }
+
 function Invoke-WithSetting($Lines) {
- # 修改设置之前先捕获调用方的原始值
- $saved = $script:FormatMode
- try {
-  $script:FormatMode = 'Upper'
-  $converted = Convert-Lines -Lines $Lines
-  return [pscustomobject]@{ Success=$true; Content=$converted.ToUpper(); Mode='Upper' }
- } catch {
-  return [pscustomobject]@{ Success=$false; Content=''; Mode='Upper' }
- } finally {
-  # 成功、失败和提前返回都会恢复原始模式
-  $script:FormatMode = $saved
- }
+    # 修改设置之前先捕获调用方的原始值
+    $saved = $script:FormatMode
+    try {
+        $script:FormatMode = 'Upper'
+        $converted = Convert-Lines -Lines $Lines
+        return [pscustomobject]@{ Success=$true; Content=$converted.ToUpper(); Mode='Upper' }
+    } catch {
+        return [pscustomobject]@{ Success=$false; Content=''; Mode='Upper' }
+    } finally {
+        # 成功、失败和提前返回都会恢复原始模式
+        $script:FormatMode = $saved
+    }
 }
 ```

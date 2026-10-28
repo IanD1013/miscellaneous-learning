@@ -24,19 +24,36 @@ function Get-ValueRecord {
 
 ```powershell
 function Get-Doubled {
- [CmdletBinding()] param([Parameter(ValueFromPipeline=$true)][ValidateRange(0,8)][int]$Value)
- begin { $script:Begins++ }
- process { $script:Processes++; [pscustomobject]@{Value=$Value;Doubled=$Value * 2} }
- end { $script:Ends++ }
+    [CmdletBinding()] 
+    param([Parameter(ValueFromPipeline=$true)][ValidateRange(0,8)][int]$Value)
+    begin { $script:Begins++ }
+    process { $script:Processes++; [pscustomobject]@{Value=$Value;Doubled=$Value * 2} }
+    end { $script:Ends++ }
 }
+
 function Invoke-Exercise {
- param($Inputs,$Options)
- $script:Begins=0; $script:Processes=0; $script:Ends=0
- try {
-  if (@($Inputs).Count -gt 8) { throw 'limit' }
-  if ($Options.Direct) { if (@($Inputs).Count -ne 1) { throw 'direct' }; $items=@(Get-Doubled -Value $Inputs[0]) }
-  else { $items=@($Inputs | Get-Doubled) }
-  [pscustomobject]@{Items=@($items);Begins=$script:Begins;Processes=$script:Processes;Ends=$script:Ends}
- } catch { [pscustomobject]@{Rejected=$true;Processes=$script:Processes} }
+    param($Inputs,$Options)
+    $script:Begins=0; $script:Processes=0; $script:Ends=0
+    
+    try {
+        if (@($Inputs).Count -gt 8) { throw 'limit' }
+        if ($Options.Direct) { 
+            if (@($Inputs).Count -ne 1) { throw 'direct' }; 
+            $items=@(Get-Doubled -Value $Inputs[0]) 
+        }
+        else { $items=@($Inputs | Get-Doubled) }
+
+        [pscustomobject]@{
+            Items=@($items);
+            Begins=$script:Begins;
+            Processes=$script:Processes;
+            Ends=$script:Ends
+        }
+    } catch { 
+        [pscustomobject]@{
+            Rejected=$true;
+            Processes=$script:Processes
+        } 
+    }
 }
 ```

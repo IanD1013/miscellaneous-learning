@@ -34,32 +34,35 @@ function Set-Text {
 
 ```powershell
 function Convert-Lines($Lines) {
- if (@($Lines).Count -gt 8) { throw 'Too many lines' }
- $staged = @()
- foreach ($line in $Lines) {
-  if ($null -eq $line -or $line.Length -gt 40 -or $line.Trim().Length -eq 0) { throw 'Invalid line' }
-  $staged += $line.Trim().ToLower()
- }
- return ($staged -join '|')
+    if (@($Lines).Count -gt 8) { throw 'Too many lines' }
+    $staged = @()
+    foreach ($line in $Lines) {
+    if ($null -eq $line -or $line.Length -gt 40 -or $line.Trim().Length -eq 0) { throw 'Invalid line' }
+    $staged += $line.Trim().ToLower()
+    }
+    return ($staged -join '|')
 }
+
 function Set-PreviewContent {
- [CmdletBinding(SupportsShouldProcess=$true)] param($Lines)
- $path = '/workspace/data.txt'
- $before = Get-Content $path -Raw
- try {
-  $desired = Convert-Lines -Lines $Lines
- } catch {
-  return [pscustomobject]@{ Success=$false; Changed=$false; WouldChange=$false; Content=$before }
- }
- $wouldChange = $before -cne $desired
- $changed = $false
- if ($wouldChange) {
-  # 只有内容不同才请求权限，-WhatIf 时 ShouldProcess 返回 $false
-  if ($PSCmdlet.ShouldProcess($path, 'Replace content')) {
-   Set-Content $path $desired -NoNewline
-   $changed = $true
-  }
- }
- return [pscustomobject]@{ Success=$true; Changed=$changed; WouldChange=$wouldChange; Content=$desired }
+    [CmdletBinding(SupportsShouldProcess=$true)] 
+    param($Lines)
+    $path = '/workspace/data.txt'
+    $before = Get-Content $path -Raw
+
+    try {
+        $desired = Convert-Lines -Lines $Lines
+    } catch {
+        return [pscustomobject]@{ Success=$false; Changed=$false; WouldChange=$false; Content=$before }
+    }
+    $wouldChange = $before -cne $desired
+    $changed = $false
+    if ($wouldChange) {
+        # 只有内容不同才请求权限，-WhatIf 时 ShouldProcess 返回 $false
+        if ($PSCmdlet.ShouldProcess($path, 'Replace content')) {
+        Set-Content $path $desired -NoNewline
+        $changed = $true
+        }
+    }
+    return [pscustomobject]@{ Success=$true; Changed=$changed; WouldChange=$wouldChange; Content=$desired }
 }
 ```
