@@ -29,8 +29,11 @@ When they name a module instead, list its lessons in course order:
 ## 1. Fetch the lesson Markdown
 
 ```bash
-.claude/skills/dometrain-notes/.venv/bin/python .claude/skills/dometrain-notes/scripts/fetch.py <url> [<url> ...] > <scratchpad>/lesson.md
+.claude/skills/dometrain-notes/.venv/bin/python .claude/skills/dometrain-notes/scripts/fetch.py --figures <notes-dir>/images <url> [<url> ...] > <scratchpad>/lesson.md
 ```
+
+- `<notes-dir>` is the folder the notes will be written to (step 4); for a single-file target, the file's folder.
+  Each lesson diagram is screenshotted to `<notes-dir>/images/<figure-id>.png` and linked in the Markdown as `![<English description>](images/<figure-id>.png)`.
 
 - It extracts only the lesson's Instructions panel and converts it to Markdown, one document per URL after a `<!-- lesson: URL lang: en|zh -->` marker.
 - Hands-on exercise lessons (`#exercise-instructions`) have a language dropdown; the script selects ZH, so they come back already in Simplified Chinese (`lang: zh`) without their Hints section.
@@ -58,6 +61,7 @@ Rules, matching the user's existing notes in `python/00-interview-questions/`:
 - Translate faithfully: no added explanations, summaries, examples, or omitted sentences.
 - Keep the source's Markdown structure: same headings (levels as fetched), lists, code blocks, and their order.
 - Translate prose and code comments; keep code, identifiers, output values, and inline code unchanged.
+- Translate an image link's alt text into one Chinese line and keep its path unchanged.
 - For a key technical term, give the English in parentheses on first use when it helps, e.g. `不可变（immutable）`.
 - Do not add a title heading the source does not have.
 - Put each full sentence on its own line, without inserting blank lines inside a paragraph.
