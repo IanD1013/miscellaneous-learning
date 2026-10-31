@@ -2,8 +2,7 @@
 
 #include "linkedlist.h"
 
-int main()
-{
+int main() {
     linkedlist_t* newList = CreateLinkedList();
     AppendToLinkedList(newList, 1);
     AppendToLinkedList(newList, 3);
